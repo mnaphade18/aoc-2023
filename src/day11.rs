@@ -1,4 +1,4 @@
-use std::usize;
+use std::cmp::{max, min};
 
 type Space = Vec<Vec<char>>;
 
@@ -50,6 +50,42 @@ fn expand(space: &mut Space) {
     }
 }
 
+fn get_expansions(space: &Space) -> (Vec<usize>, Vec<usize>) {
+    //expand vert
+    let mut rows = Vec::new();
+    let mut len = 0;
+    for (i, row) in space.iter().enumerate() {
+        if len == 0 {
+            len = row.len();
+        }
+
+        let galaxy_present = row.iter().fold(false, |acc, c| {
+            return *c == '#' || acc;
+        });
+
+        if !galaxy_present {
+            rows.push(i);
+        }
+    }
+
+    //expand horizontal
+    let mut cols = Vec::new();
+    let vert_len = space.len();
+    println!("LENGTHS: VERT: {}, LEN: {}", vert_len, len);
+
+    for i in 0..len {
+        let mut galaxy_present = false;
+        for j in 0..vert_len {
+            galaxy_present |= space[j][i] == '#'
+        }
+        if !galaxy_present {
+            cols.push(i);
+        }
+    }
+
+    return (rows, cols);
+}
+
 fn get_galaxies(space: &Space) -> Vec<(usize, usize)> {
     let mut result = Vec::new();
 
@@ -79,15 +115,37 @@ fn find_distances(p: &Vec<(usize,usize)>) -> Vec<usize> {
     return result;
 }
 
+fn find_distances_with_expansions(p: &Vec<(usize,usize)>, ex: (Vec<usize>, Vec<usize>)) -> Vec<usize> {
+    let mut result = Vec::new();
+
+    for (i, g1) in p.iter().enumerate() {
+        for j in (i + 1)..p.len() {
+            let g2 = &p[j];
+
+            let x_count = ex.0.iter().filter(|v| **v < max(g1.0, g2.0) && **v > min(g1.0, g2.0)).count();
+            let y_count = ex.1.iter().filter(|v| **v < max(g1.1, g2.1) && **v > min(g1.1, g2.1)).count();
+            let x = g1.0.abs_diff(g2.0) + x_count * 1000000 - x_count;
+            let y = g1.1.abs_diff(g2.1) + y_count * 1000000 - y_count;
+
+            let d = x + y;
+            result.push(d);
+        }
+    }
+
+    return result;
+}
+
 pub fn solve() {
     let ip = INPUT;
     let mut space: Space = ip.lines().map(|l| l.chars().collect()).collect();
 
-    expand(&mut space);
+    // expand(&mut space);
+    let expansions = get_expansions(&space);
 
     let g = get_galaxies(&space);
 
-    let distances = find_distances(&g);
+    //let distances = find_distances(&g);
+    let distances = find_distances_with_expansions(&g, expansions);
     let sum: usize = distances.iter().sum();
     println!("DISANCE: {:?}, sum: {}", distances, sum);
 }
