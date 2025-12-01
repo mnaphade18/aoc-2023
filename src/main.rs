@@ -10,8 +10,10 @@ mod  day8;
 mod day9;
 mod day10;
 mod day11;
+mod day21;
+mod day22;
 
 fn main() {
     println!("Hello, world!");
-    day11::solve();
+    day22::solve();
 }
